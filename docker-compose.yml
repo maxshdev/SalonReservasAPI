@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: salon-api
+    ports:
+      - "5000:8080"
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=salon_db;Username=admin;Password=admin123
+
+  db:
+    image: postgres:16
+    container_name: salon-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: salon_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.tools
+    container_name: salon-tools
+    working_dir: /src
+    volumes:
+      - ./:/src
+    depends_on:
+      - db
+    entrypoint: ["tail", "-f", "/dev/null"]
+
+volumes:
+  pgdata:
