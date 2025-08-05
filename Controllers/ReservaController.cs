@@ -25,9 +25,41 @@ public class ReservaController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> ObtenerTodas()
+    public async Task<IActionResult> ObtenerTodasLasReservas()
     {
-        var reservas = await _context.Reservas.Include(r => r.Salon).ToListAsync();
+        var reservas = await _context.Reservas
+            .Include(r => r.Salon)
+            .Select(r => new ReservaDto
+            {
+                Id = r.Id,
+                Fecha = r.Fecha,
+                HoraInicio = r.HoraInicio,
+                HoraFin = r.HoraFin,
+                SalonId = r.SalonId,
+                SalonNombre = r.Salon.Nombre
+            })
+            .ToListAsync();
+
+        return Ok(reservas);
+    }
+
+    [HttpGet("{fecha}")]
+    public async Task<IActionResult> ObtenerReservas(DateOnly fecha)
+    {
+        var reservas = await _context.Reservas
+            .Include(r => r.Salon)
+            .Where(r => r.Fecha == fecha)
+            .Select(r => new ReservaDto
+            {
+                Id = r.Id,
+                Fecha = r.Fecha,
+                HoraInicio = r.HoraInicio,
+                HoraFin = r.HoraFin,
+                SalonId = r.SalonId,
+                SalonNombre = r.Salon.Nombre
+            })
+            .ToListAsync();
+
         return Ok(reservas);
     }
 }
