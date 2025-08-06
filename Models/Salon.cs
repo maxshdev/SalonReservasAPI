@@ -1,4 +1,3 @@
-// Models\Salon.cs
 namespace SalonReservaApi.Models;
 
 public class Salon

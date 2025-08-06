@@ -1,4 +1,3 @@
-// Program.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SalonReservaApi.Data;

@@ -1,4 +1,3 @@
-// Models\Reserva.cs
 using System.ComponentModel.DataAnnotations;
 
 namespace SalonReservaApi.Models;
