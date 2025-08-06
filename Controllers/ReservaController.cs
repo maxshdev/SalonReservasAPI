@@ -2,9 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SalonReservaApi.Data;
 using SalonReservaApi.Models;
+using SalonReservaApi.Dtos;
 
 namespace SalonReservaApi.Controllers;
 
+/// <summary>
+/// Controlador para gestionar reservas en los salones.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class ReservaController : ControllerBase
@@ -16,14 +20,19 @@ public class ReservaController : ControllerBase
         _context = context;
     }
 
+    /// <summary>
+    /// Crea una nueva reserva con validaciones de horario, solapamientos y márgenes.
+    /// </summary>
+    /// <param name="reserva">Datos de la reserva</param>
+    /// <returns>Reserva creada como DTO</returns>
     [HttpPost]
     public async Task<IActionResult> CrearReserva([FromBody] Reserva reserva)
     {
-        // Validar que HoraInicio sea anterior a HoraFin
+        // Validar que HoraInicio < HoraFin
         if (reserva.HoraInicio >= reserva.HoraFin)
             return BadRequest("La hora de inicio debe ser anterior a la de fin.");
 
-        // Definir horario permitido: 9:00 a 18:00
+        // Horario permitido: 9:00 a 18:00
         var apertura = new TimeOnly(9, 0);
         var cierre = new TimeOnly(18, 0);
 
@@ -39,13 +48,15 @@ public class ReservaController : ControllerBase
             );
 
         if (solapamiento)
-            return Conflict("Ya existe una reserva que se superpone con este horario o no respeta los 30 minutos de margen.");
+            return Conflict("Ya existe una reserva que se superpone o no respeta los 30 minutos de margen.");
 
-        // Si pasa validaciones, agregar y guardar
+        // Guardar la reserva
         _context.Reservas.Add(reserva);
         await _context.SaveChangesAsync();
 
-        // Devolver DTO (por consistencia)
+        // Obtener nombre del salón para el DTO
+        var salon = await _context.Salones.FindAsync(reserva.SalonId);
+
         var reservaDto = new ReservaDto
         {
             Id = reserva.Id,
@@ -53,12 +64,15 @@ public class ReservaController : ControllerBase
             HoraInicio = reserva.HoraInicio,
             HoraFin = reserva.HoraFin,
             SalonId = reserva.SalonId,
-            SalonNombre = (await _context.Salones.FindAsync(reserva.SalonId))?.Nombre ?? ""
+            SalonNombre = salon?.Nombre ?? string.Empty
         };
 
         return Ok(reservaDto);
     }
 
+    /// <summary>
+    /// Obtiene todas las reservas existentes.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> ObtenerTodasLasReservas()
     {
@@ -78,6 +92,10 @@ public class ReservaController : ControllerBase
         return Ok(reservas);
     }
 
+    /// <summary>
+    /// Obtiene las reservas para una fecha específica.
+    /// </summary>
+    /// <param name="fecha">Fecha en formato yyyy-MM-dd</param>
     [HttpGet("{fecha}")]
     public async Task<IActionResult> ObtenerReservas(DateOnly fecha)
     {
