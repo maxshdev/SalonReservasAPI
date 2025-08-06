@@ -7,5 +7,5 @@ public class ReservaDto
     public TimeOnly HoraInicio { get; set; }
     public TimeOnly HoraFin { get; set; }
     public int SalonId { get; set; }
-    public string SalonNombre { get; set; } = default!;
+    public string? SalonNombre { get; set; }
 }
